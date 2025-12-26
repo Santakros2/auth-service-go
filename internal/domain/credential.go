@@ -18,3 +18,7 @@ type RefreshToken struct {
 	ExpireAt  time.Time
 	Revoked   bool
 }
+
+type LoginResponse struct {
+	Valid bool
+}
