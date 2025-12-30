@@ -15,5 +15,4 @@ func NewHandler(s *service.Service) AuthHandler {
 
 func (h *AuthHandler) LoginHandle(w http.ResponseWriter, r *http.Request) {
 	// var user domain.AuthUser
-
 }
