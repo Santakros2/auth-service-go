@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"auth-service/internal/service"
+	"encoding/json"
 	"net/http"
 )
 
@@ -13,6 +14,74 @@ func NewHandler(s *service.Service) AuthHandler {
 	return AuthHandler{Service: s}
 }
 
+type LoginRequest struct {
+	Email    string `json: "email"`
+	Password string `json: "password"`
+}
+
+type AuthResponse struct {
+	AccessToken  string `json: "access"`
+	RefreshToken string `json: "refresh"`
+}
+
 func (h *AuthHandler) LoginHandle(w http.ResponseWriter, r *http.Request) {
-	// var user domain.AuthUser
+
+	// Storing Input
+	var req LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	// Validating Input
+	if req.Email == "" || req.Password == "" {
+		http.Error(w, "email and password required", http.StatusBadRequest)
+		return
+	}
+
+	// Calling Service layer
+	access, refresh, err := h.Service.Login(
+		r.Context(), req.Email, req.Password,
+	)
+	if err != nil {
+		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		return
+	}
+
+	// Response sending
+	json.NewEncoder(w).Encode(AuthResponse{
+		AccessToken:  access,
+		RefreshToken: refresh,
+	})
+}
+
+func (h *AuthHandler) RefreshHandler(w http.ResponseWriter, r *http.Request) {
+	type token struct {
+		string `json: "refresh"`
+	}
+
+	var refresh token
+
+	// Input taking
+	if err := json.NewDecoder(r.Body).Decode(&refresh); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	if refresh == "" {
+		http.Error(w, "no refresh", http.StatusBadRequest)
+		return
+	}
+
+	access, refresh, err := h.Service.Refresh(r.Context(), refresh)
+
+	if err != nil {
+		http.Error(w, "Invalid credential", http.StatusUnauthorized)
+		return
+	}
+
+	json.NewEncoder(w).Encode(AuthResponse{
+		AccessToken:  access,
+		RefreshToken: refresh,
+	})
 }

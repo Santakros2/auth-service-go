@@ -1,7 +1,6 @@
 package service
 
 import (
-	"auth-service/internal/domain"
 	"auth-service/internal/repository"
 	"auth-service/internal/security"
 	"context"
@@ -16,32 +15,36 @@ func NewService(repo repository.AuthUserRepository) *Service {
 	return &Service{Repo: repo}
 }
 
-func (s *Service) Login(ctx context.Context, email string, password string) (*domain.LoginResponse, error) {
+func (s *Service) Login(ctx context.Context, email string, password string) (string, string, error) {
 	if email == "" {
-		return nil, fmt.Errorf("please enter valid email")
+		return "", "", fmt.Errorf("please enter valid email")
 	}
 
 	if password == "" {
-		return nil, fmt.Errorf("please enter valid password")
+		return "", "", fmt.Errorf("please enter valid password")
 	}
 
 	user, err := s.Repo.FindByMail(ctx, email)
 
 	if err != nil {
-		return nil, err
+		return "", "", err
 	}
 
 	if user == nil {
-		return nil, fmt.Errorf("invalid email or password")
+		return "", "", fmt.Errorf("invalid email or password")
 	}
 
 	if !security.PasswordCheck(password, user.Password) {
-		return nil, fmt.Errorf("invalid email or password")
+		return "", "", fmt.Errorf("invalid email or password")
 	}
 
 	if !user.IsActive || user.IsLocked {
-		return nil, fmt.Errorf("account disabled")
+		return "", "", fmt.Errorf("account disabled")
 	}
 
-	return &domain.LoginResponse{Valid: true}, nil
+	return "", "", nil
+}
+
+func (s *Service) Refresh(ctx context.Context, refresh string) (string, string, error) {
+	return "", "", nil
 }
