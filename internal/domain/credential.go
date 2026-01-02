@@ -22,3 +22,5 @@ type RefreshToken struct {
 type LoginResponse struct {
 	Valid bool
 }
+
+

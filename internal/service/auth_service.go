@@ -48,3 +48,7 @@ func (s *Service) Login(ctx context.Context, email string, password string) (str
 func (s *Service) Refresh(ctx context.Context, refresh string) (string, string, error) {
 	return "", "", nil
 }
+
+func (s *Service) Logout(ctx context.Context, refresh string) error {
+	return nil
+}

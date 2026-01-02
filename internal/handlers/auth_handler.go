@@ -15,13 +15,17 @@ func NewHandler(s *service.Service) AuthHandler {
 }
 
 type LoginRequest struct {
-	Email    string `json: "email"`
-	Password string `json: "password"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 type AuthResponse struct {
-	AccessToken  string `json: "access"`
-	RefreshToken string `json: "refresh"`
+	AccessToken  string `json:"access"`
+	RefreshToken string `json:"refresh"`
+}
+
+type token struct {
+	RefreshToken string `json:"refresh"`
 }
 
 func (h *AuthHandler) LoginHandle(w http.ResponseWriter, r *http.Request) {
@@ -56,9 +60,6 @@ func (h *AuthHandler) LoginHandle(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) RefreshHandler(w http.ResponseWriter, r *http.Request) {
-	type token struct {
-		string `json: "refresh"`
-	}
 
 	var refresh token
 
@@ -68,12 +69,12 @@ func (h *AuthHandler) RefreshHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if refresh == "" {
+	if refresh.RefreshToken == "" {
 		http.Error(w, "no refresh", http.StatusBadRequest)
 		return
 	}
 
-	access, refresh, err := h.Service.Refresh(r.Context(), refresh)
+	access, newRefresh, err := h.Service.Refresh(r.Context(), refresh.RefreshToken)
 
 	if err != nil {
 		http.Error(w, "Invalid credential", http.StatusUnauthorized)
@@ -82,6 +83,34 @@ func (h *AuthHandler) RefreshHandler(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(AuthResponse{
 		AccessToken:  access,
-		RefreshToken: refresh,
+		RefreshToken: newRefresh,
 	})
+}
+
+func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	var refresh token
+
+	if err := json.NewDecoder(r.Body).Decode(refresh); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	if refresh.RefreshToken == "" {
+		http.Error(w, "no refresh", http.StatusBadRequest)
+		return
+	}
+
+	err := h.Service.Logout(r.Context(), refresh.RefreshToken)
+
+	if err != nil {
+		http.Error(w, "Invalid Credential", http.StatusUnauthorized)
+		return
+	}
+
+	json.NewEncoder(w).Encode(http.StatusNoContent)
+}
+
+
+func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) {
+	
 }
