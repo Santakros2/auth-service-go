@@ -110,7 +110,6 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(http.StatusNoContent)
 }
 
-
 func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) {
-	
+
 }
