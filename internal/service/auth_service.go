@@ -42,7 +42,9 @@ func (s *Service) Login(ctx context.Context, email string, password string) (str
 		return "", "", fmt.Errorf("account disabled")
 	}
 
-	return "", "", nil
+	tokenPair, err := security.GenerateToken(user.ID, user.Email, user.Role)
+
+	return tokenPair.AccessToken, tokenPair.RefreshToken, nil
 }
 
 func (s *Service) Refresh(ctx context.Context, refresh string) (string, string, error) {
