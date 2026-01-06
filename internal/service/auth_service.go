@@ -1,10 +1,15 @@
 package service
 
 import (
+	"auth-service/internal/domain"
 	"auth-service/internal/repository"
 	"auth-service/internal/security"
 	"context"
 	"fmt"
+	"log"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 type Service struct {
@@ -16,6 +21,8 @@ func NewService(repo repository.AuthUserRepository) *Service {
 }
 
 func (s *Service) Login(ctx context.Context, email string, password string) (string, string, error) {
+
+	// Validation for the input
 	if email == "" {
 		return "", "", fmt.Errorf("please enter valid email")
 	}
@@ -24,6 +31,7 @@ func (s *Service) Login(ctx context.Context, email string, password string) (str
 		return "", "", fmt.Errorf("please enter valid password")
 	}
 
+	// Getting the User info
 	user, err := s.Repo.FindByMail(ctx, email)
 
 	if err != nil {
@@ -34,6 +42,7 @@ func (s *Service) Login(ctx context.Context, email string, password string) (str
 		return "", "", fmt.Errorf("invalid email or password")
 	}
 
+	// Validation for password
 	if !security.PasswordCheck(password, user.Password) {
 		return "", "", fmt.Errorf("invalid email or password")
 	}
@@ -42,7 +51,27 @@ func (s *Service) Login(ctx context.Context, email string, password string) (str
 		return "", "", fmt.Errorf("account disabled")
 	}
 
+	// Token Generation
 	tokenPair, err := security.GenerateToken(user.ID, user.Email, user.Role)
+	if err != nil {
+		return "", "", err
+	}
+
+	// Hash the Refresh Token
+
+	// Create struct to store in db
+	ref := domain.RefreshToken{
+		ID:        uuid.New().String(),
+		UserID:    user.ID,
+		TokenHash: tokenPair.RefreshToken,
+		ExpireAt:  time.Now().Add(30 * 24 * time.Hour),
+		Revoked:   false,
+	}
+	// Saving Refresh Token
+	if err := s.Repo.SaveRefresh(ctx, &ref); err != nil {
+		log.Print("could not save refresh")
+		return "", "", err
+	}
 
 	return tokenPair.AccessToken, tokenPair.RefreshToken, nil
 }
