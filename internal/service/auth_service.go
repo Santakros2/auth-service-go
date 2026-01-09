@@ -4,6 +4,7 @@ import (
 	"auth-service/internal/domain"
 	"auth-service/internal/repository"
 	"auth-service/internal/security"
+	"auth-service/pkg/encrypt"
 	"context"
 	"fmt"
 	"log"
@@ -58,12 +59,13 @@ func (s *Service) Login(ctx context.Context, email string, password string) (str
 	}
 
 	// Hash the Refresh Token
+	hashRefresh := encrypt.HashToken(tokenPair.RefreshToken)
 
 	// Create struct to store in db
 	ref := domain.RefreshToken{
 		ID:        uuid.New().String(),
 		UserID:    user.ID,
-		TokenHash: tokenPair.RefreshToken,
+		TokenHash: hashRefresh,
 		ExpireAt:  time.Now().Add(30 * 24 * time.Hour),
 		Revoked:   false,
 	}
