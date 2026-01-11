@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"auth-service/internal/domain"
 	"auth-service/internal/service"
 	"encoding/json"
 	"log"
@@ -117,9 +118,24 @@ func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) Signup(w http.ResponseWriter, r *http.Request) {
-	var user AuthHandler
+	var user domain.SignupRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
 	}
+
+	if user.Email == "" || user.Password == "" {
+		http.Error(w, "email and password required", http.StatusBadRequest)
+		return
+	}
+
+	err := h.Service.Signup(r.Context(), user.Email, user.Password)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusConflict)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
 }

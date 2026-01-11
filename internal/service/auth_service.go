@@ -6,6 +6,7 @@ import (
 	"auth-service/internal/security"
 	"auth-service/pkg/encrypt"
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -84,4 +85,28 @@ func (s *Service) Refresh(ctx context.Context, refresh string) (string, string, 
 
 func (s *Service) Logout(ctx context.Context, refresh string) error {
 	return nil
+}
+
+func (s *Service) Signup(ctx context.Context, email string, password string) error {
+	exists, err := s.UserRepo.ExistsByEmail(ctx, email)
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		return errors.New("email already registered")
+	}
+
+	hashed, err := hashPassword(password)
+	if err != nil {
+		return err
+	}
+
+	user := &domain.AuthUser{
+		ID:       uuid.NewString(),
+		Email:    email,
+		Password: hashed,
+	}
+
+	return s.UserRepo.Create(ctx, user)
 }
