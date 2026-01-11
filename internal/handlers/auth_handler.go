@@ -3,6 +3,7 @@ package handlers
 import (
 	"auth-service/internal/service"
 	"encoding/json"
+	"log"
 	"net/http"
 )
 
@@ -42,6 +43,7 @@ func (h *AuthHandler) LoginHandle(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "email and password required", http.StatusBadRequest)
 		return
 	}
+	log.Println(req.Password)
 
 	// Calling Service layer
 	access, refresh, err := h.Service.Login(
@@ -112,4 +114,12 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 
 func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) {
 
+}
+
+func (h *AuthHandler) Signup(w http.ResponseWriter, r *http.Request) {
+	var user AuthHandler
+
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	}
 }

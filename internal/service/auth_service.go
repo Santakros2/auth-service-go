@@ -34,7 +34,7 @@ func (s *Service) Login(ctx context.Context, email string, password string) (str
 
 	// Getting the User info
 	user, err := s.Repo.FindByMail(ctx, email)
-
+	log.Println(user.Email)
 	if err != nil {
 		return "", "", err
 	}

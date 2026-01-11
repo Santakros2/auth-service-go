@@ -42,10 +42,10 @@ func (r *UserRepository) FindByMail(ctx context.Context, email string) (*domain.
 	var user domain.AuthUser
 
 	err := row.Scan(&user.ID, &user.Email, &user.Password, &user.Role, &user.IsActive, &user.IsLocked)
-
+	log.Println(err)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil
+			return nil, err
 		}
 		return nil, err
 	}
@@ -55,9 +55,9 @@ func (r *UserRepository) FindByMail(ctx context.Context, email string) (*domain.
 }
 
 func (r *UserRepository) SaveRefresh(ctx context.Context, refresh *domain.RefreshToken) error {
-	query := `INSERT INTO auth_users(user_id, token_hash, expire_at, revoked) VALUES(?, ?, ?, ?)`
+	query := `INSERT INTO refresh_tokens(id, user_id, token_hash, expires_at, revoked) VALUES(?, ?, ?, ?, ?)`
 
-	_, err := r.DB.ExecContext(ctx, query, refresh.ID, refresh.TokenHash, refresh.ExpireAt, refresh.Revoked)
+	_, err := r.DB.ExecContext(ctx, query, refresh.ID, refresh.UserID, refresh.TokenHash, refresh.ExpireAt, refresh.Revoked)
 
 	if err != nil {
 		log.Println("err in db", err)
